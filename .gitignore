@@ -233,3 +233,6 @@ models/*
 *.onnx
 *.mp4
 *.egg-info/
+sim/webots/worlds/.*.wbproj
+sim/webots/worlds/.*
+sim/webots/controllers/*/*.png
