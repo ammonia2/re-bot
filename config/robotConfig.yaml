@@ -1,0 +1,6 @@
+targetFollowDistance: 1.5
+obstacleStopDistance: 0.4
+distanceGain: 0.8
+bearingGain: 1.2
+maxWheelSpeed: 6.0
+detectorInputSize: 320

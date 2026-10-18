@@ -1,3 +1,8 @@
+# editor things
+.vscode
+.claude
+CLAUDE.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -218,3 +223,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+runs/
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+*.pt
+*.onnx
+*.mp4
+*.egg-info/

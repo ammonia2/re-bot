@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "re-bot"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "numpy",
+  "opencv-python",
+  "pyyaml",
+  "psutil",
+  "onnxruntime",
+]
+
+[dependency-groups]
+dev = [
+  "ultralytics",
+  "pytest",
+  "pandas",
+  "matplotlib",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
