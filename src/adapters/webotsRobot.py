@@ -1,11 +1,11 @@
 import numpy as np
-from controller import Robot
+from controller import Robot, Supervisor
 from core.robotInterface import robotInterface
-
+import math
 
 class webotsRobot(robotInterface):
     def __init__(self):
-        self.robot = Robot()
+        self.robot = Supervisor()  # was Robot()
         self.timeStep = int(self.robot.getBasicTimeStep())
 
         self.leftMotor = self.robot.getDevice("left wheel")
@@ -23,6 +23,17 @@ class webotsRobot(robotInterface):
 
     def step(self):
         return self.robot.step(self.timeStep) != -1
+
+    def getSelfPose(self):
+        node = self.robot.getSelf()
+        x, y, _ = node.getPosition()
+        orientation = node.getOrientation()
+        yaw = math.atan2(orientation[3], orientation[0])
+        return x, y, yaw
+
+    def getPersonPosition(self, defName="person"):
+        x, y, _ = self.robot.getFromDef(defName).getPosition()
+        return x, y
 
     def getFrame(self):
         raw = self.camera.getImage()
