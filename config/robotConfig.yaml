@@ -1,6 +1,12 @@
 targetFollowDistance: 1.5
 obstacleStopDistance: 0.4
 distanceGain: 3.0
-bearingGain: 1.2
+bearingGain: 2.0
 maxWheelSpeed: 6.0
 detectorInputSize: 320
+cameraHalfFov: 0.55
+maxDetectionRange: 6.0
+searchTurnSpeed: 1.5
+searchTimeoutSteps: 600
+lostGraceSteps: 15
+reacquireFovFactor: 0.6
