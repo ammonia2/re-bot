@@ -20,7 +20,7 @@ RectangleArena {
   floorSize 10 10
 }
 Pioneer3dx {
-  translation 0.3702292037874836 -6.135374239756367e-09 0.09579263886182308
+  translation -3 0 0.0957926
   rotation -1.8270876901385603e-06 -0.9999999999982442 -4.162763795645636e-07 0.049952590785315644
   controller "companionController"
   supervisor TRUE
