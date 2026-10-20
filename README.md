@@ -57,6 +57,15 @@ tests/             pytest tests
 
 ## Running the simulation
 
+From the repository root, run:
+
+```
+uv sync
+webots sim/webots/worlds/companionArena.wbt
+# Webots > Preferences > Python command: <repo>/.venv/bin/python
+# after any world file change: File > Reload World
+```
+
 1. Open Webots and choose **File → Open World…**, then pick a world in `sim/webots/worlds/`.
 2. The simulation starts and runs the robot's controller automatically. Controller output shows up in the **Console** panel.
 
