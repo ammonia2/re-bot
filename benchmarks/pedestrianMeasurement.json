@@ -1,0 +1,98 @@
+{
+  "neutralPoseHeightMeters": 1.838331,
+  "minimumZ": -1.27901,
+  "maximumZ": 0.559321,
+  "parts": [
+    {
+      "part": "PedestrianHead",
+      "minimumZ": 0.308507,
+      "maximumZ": 0.559321,
+      "sha256": "988748628c9329ca46144cc377d4909530631d4c61d1f72bae4b26c38e3d6dc4"
+    },
+    {
+      "part": "PedestrianLeftFoot",
+      "minimumZ": -1.27314,
+      "maximumZ": -1.12394,
+      "sha256": "289ed48cc2a8f52bd25d2f705ec40579becb1f2b6bc1571a6edf8ef67090257e"
+    },
+    {
+      "part": "PedestrianLeftHand",
+      "minimumZ": -0.528936,
+      "maximumZ": -0.331094,
+      "sha256": "7947223ec6d9ce44ab177337ba5ec828143af2a3cd7d4546d141e9a78af5ee17"
+    },
+    {
+      "part": "PedestrianLeftLowerArm",
+      "minimumZ": -0.397685,
+      "maximumZ": -0.0334907,
+      "sha256": "328288bebbc47ccbe94630748fcefc83c3c8013c9a7d2ff1873f3f23adc72c04"
+    },
+    {
+      "part": "PedestrianLeftLowerLeg",
+      "minimumZ": -1.20009,
+      "maximumZ": -0.696018,
+      "sha256": "5ba2079ffde3b44add01fe0418c0be943f80d41f3ee33fab0cec44cd82f187b4"
+    },
+    {
+      "part": "PedestrianLeftUpperArm",
+      "minimumZ": -0.13451,
+      "maximumZ": 0.295955,
+      "sha256": "dc4a3d75199f6150356553057dccbf4a7492dd401f4ed90e3763c86e6b411c65"
+    },
+    {
+      "part": "PedestrianLeftUpperLeg",
+      "minimumZ": -0.82409,
+      "maximumZ": -0.201597,
+      "sha256": "505642d174339647aa6186c7c49a5649a74a4004aeded6c6d12927f1c800cbac"
+    },
+    {
+      "part": "PedestrianNeck",
+      "minimumZ": 0.116233,
+      "maximumZ": 0.420398,
+      "sha256": "9b7f49c9402b78d80a1d7d9792cead56d045ee9be5750ce4203f7e89a687ef3c"
+    },
+    {
+      "part": "PedestrianRightFoot",
+      "minimumZ": -1.27901,
+      "maximumZ": -1.12482,
+      "sha256": "a41599f4f4488bdbc0f3a9feb594cbef4179f1bdcea6ab803b5aeaeb236034b2"
+    },
+    {
+      "part": "PedestrianRightHand",
+      "minimumZ": -0.526037,
+      "maximumZ": -0.330473,
+      "sha256": "87337afdeb2a97fc93ce751afde8933e48b638f7dfe3bd8b623260540707991b"
+    },
+    {
+      "part": "PedestrianRightLowerArm",
+      "minimumZ": -0.397292,
+      "maximumZ": -0.0344726,
+      "sha256": "cb68dfb50250593a09a123a7b80c2fe2794814938e5d31a3b602155a577538c5"
+    },
+    {
+      "part": "PedestrianRightLowerLeg",
+      "minimumZ": -1.20136,
+      "maximumZ": -0.696722,
+      "sha256": "8135c4b90630578dd80869bfbcfa68c65ec13f0547eda6d88c5bccfcc5982e96"
+    },
+    {
+      "part": "PedestrianRightUpperArm",
+      "minimumZ": -0.135719,
+      "maximumZ": 0.295901,
+      "sha256": "c640fd66acf84434086edea16d92efefd238370101fe422ff0fec2b6aaf7f1dd"
+    },
+    {
+      "part": "PedestrianRightUpperLeg",
+      "minimumZ": -0.82332,
+      "maximumZ": -0.202353,
+      "sha256": "1fdd580777e1e62e34d487d335b37f03fb502eb77e4372f71e0825ce9b0d0bcb"
+    },
+    {
+      "part": "PedestrianTorso",
+      "minimumZ": -0.404329,
+      "maximumZ": 0.307483,
+      "sha256": "1a33a0493bea614a763d9c0ea53e2623226f7904efb49ded48efc5bc240faaa4"
+    }
+  ],
+  "scope": "Mesh extents at zero joint angles; assumes the standard R2025a untranslated part geometries. Walking pose height varies."
+}
