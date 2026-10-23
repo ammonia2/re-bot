@@ -4,6 +4,8 @@ import math
 def wrapAngle(angle):
     return math.atan2(math.sin(angle), math.cos(angle))
 
+def rampSpeed(current, target, maxDelta):
+    return current + clamp(target - current, maxDelta)
 
 def clamp(value, limit):
     return max(-limit, min(limit, value))

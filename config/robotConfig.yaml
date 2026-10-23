@@ -3,6 +3,7 @@ obstacleStopDistance: 0.4
 distanceGain: 3.0
 bearingGain: 2.0
 maxWheelSpeed: 6.0
+maxWheelAccel: 0.15
 detectorInputSize: 320
 cameraHalfFov: 0.55
 maxDetectionRange: 6.0 # to be realistic for sim
