@@ -236,3 +236,6 @@ models/*
 sim/webots/worlds/.*.wbproj
 sim/webots/worlds/.*
 sim/webots/controllers/*/*.png
+
+# Local Webots worlds and generated project files
+/sim/webots/worlds/
