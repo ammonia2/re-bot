@@ -89,6 +89,8 @@ A reference version is already written (pinhole model, monocular distance from b
 
 - `cameraWidth`, `cameraHeight` and `cameraFov` (horizontal, radians) must match the `Camera` node in the world.
 - `personHeightMeters` must match the Pedestrian model.
+- `cameraForwardOffset` is how far the camera sits ahead of the rover center, in meters. Vision converts camera range to rover-center range with it.
+- `observationSource: visionDirect` is a temporary integration stand-in: detector plus estimator on the most central box, with no tracking or identity. `vision` is the real pipeline.
 - `detectorInputSize` already exists.
 - Anyone adding a key tells the owner and documents it here.
 

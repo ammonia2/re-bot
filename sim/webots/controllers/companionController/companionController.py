@@ -6,7 +6,7 @@ import yaml
 from adapters.webotsRobot import webotsRobot
 from core.followController import rampSpeed, wrapAngle
 from core.followStateMachine import followStateMachine, roverState
-from perception.visionObservation import makeVisionObservation
+from perception.visionObservation import makeDirectVisionObservation, makeVisionObservation
 
 configPath = Path(__file__).resolve().parents[4] / "config" / "robotConfig.yaml"
 config = yaml.safe_load(configPath.read_text())
@@ -24,6 +24,8 @@ def groundTruthObservation(rover, config, fovScale=1.0):
 
 if config["observationSource"] == "vision":
     observe = makeVisionObservation(config)
+elif config["observationSource"] == "visionDirect":
+    observe = makeDirectVisionObservation(config)
 else:
     observe = groundTruthObservation
 
