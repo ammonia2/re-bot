@@ -1,11 +1,11 @@
-targetFollowDistance: 1.5
+targetFollowDistance: 3.3
 obstacleStopDistance: 0.4
 distanceGain: 3.0
 bearingGain: 2.0
 maxWheelSpeed: 6.0
 maxWheelAccel: 0.15
 detectorInputSize: 320
-cameraHalfFov: 0.55
+cameraHalfFov: 0.3927
 maxDetectionRange: 6.0 # to be realistic for sim
 searchTurnSpeed: 1.5
 searchTimeoutSteps: 600
@@ -15,5 +15,5 @@ observationSource: groundTruth
 cameraWidth: 640
 cameraHeight: 480
 cameraFov: 0.7854
-personHeightMeters: 1.8
+personHeightMeters: 1.84
 detectorConfidence: 0.35

@@ -71,22 +71,26 @@ def main():
     root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description="Capture real adapter frames in an isolated Webots project")
     parser.add_argument("--variant", choices=("baseline", "calibrated"), default="baseline")
-    parser.add_argument("--revision", default="HEAD", help="Read the committed world at this revision")
+    parser.add_argument("--revision", default="HEAD",
+                        help="Read the committed world at this revision, or 'worktree' for the local file")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--detect", action="store_true", help="Run the detector live during capture")
     args = parser.parse_args()
     defaultFolder = "detectorFeasibility" if args.variant == "baseline" else "calibratedFeasibility"
     output = (args.output or root / "data" / defaultFolder).resolve()
-    world = subprocess.check_output(
-        ["git", "show", f"{args.revision}:sim/webots/worlds/companionArena.wbt"], cwd=root, text=True,
-    )
+    worldPath = "sim/webots/worlds/companionArena.wbt"
+    if args.revision == "worktree":
+        world = (root / worldPath).read_text()
+    else:
+        world = subprocess.check_output(["git", "show", f"{args.revision}:{worldPath}"], cwd=root, text=True)
     world = world.replace('controller "companionController"', 'controller "captureFrames"', 1)
-    camera = "DEF captureCamera Camera {}"
     if args.variant == "calibrated":
-        camera = "DEF captureCamera Camera { translation 0.3 0 0.9 width 640 height 480 fieldOfView 0.7854 }"
-    world, count = re.subn(r"Camera\s*\{\s*\}", lambda match: camera, world, count=1)
+        camera = lambda match: "DEF captureCamera Camera { translation 0.3 0 0.9 width 640 height 480 fieldOfView 0.7854 }"
+    else:
+        camera = lambda match: "DEF captureCamera " + match.group(0)
+    world, count = re.subn(r"Camera\s*\{[^{}]*\}", camera, world, count=1)
     if count != 1:
-        parser.error("Capture expects an empty Camera node; update this benchmark for the new world")
+        parser.error("Capture expects one Camera node without child nodes; update this benchmark for the new world")
     environment = dict(os.environ)
     environment.update({"REBOT_CAPTURE_OUTPUT": str(output), "REBOT_CAPTURE_DETECT": str(int(args.detect)),
                         "YOLO_CONFIG_DIR": str(root / "data/ultralyticsSettings"), "YOLO_AUTOINSTALL": "false"})
