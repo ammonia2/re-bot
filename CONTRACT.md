@@ -84,14 +84,27 @@ A reference version is already written (pinhole model, monocular distance from b
     cameraWidth: 640
     cameraHeight: 480
     cameraFov: 0.7854
-    personHeightMeters: 1.8
+    personHeightMeters: 1.84
     detectorConfidence: 0.35
+    trackerMaxAge: 30
+    trackerMinHits: 3
+    trackerIouThreshold: 0.3
+    trackerDeltaT: 3
+    trackerInertia: 0.2
+    selectorMatchThreshold: 0.65
+    selectorRejectThreshold: 0.35
+    selectorMargin: 0.1
+    selectorConfirmFrames: 3
+    selectorGallerySize: 20
 
 - `cameraWidth`, `cameraHeight` and `cameraFov` (horizontal, radians) must match the `Camera` node in the world.
 - `personHeightMeters` must match the Pedestrian model.
 - `cameraForwardOffset` is how far the camera sits ahead of the rover center, in meters. Vision converts camera range to rover-center range with it.
 - `observationSource: visionDirect` is a temporary integration stand-in: detector plus estimator on the most central box, with no tracking or identity. `vision` is the real pipeline.
 - `detectorInputSize` already exists.
+- `tracker*` keys tune the OC-SORT tracker: frames a lost track survives (`trackerMaxAge`), hits before a track is reported (`trackerMinHits`), minimum IoU to match (`trackerIouThreshold`), frames back for the motion direction (`trackerDeltaT`), weight of the direction term (`trackerInertia`).
+- `selector*` keys tune re-acquisition by appearance (colour histogram similarity, 0 to 1): minimum similarity to re-lock (`selectorMatchThreshold`), similarity below which the target's own track is dropped as an ID switch (`selectorRejectThreshold`), lead the best match needs over everyone else (`selectorMargin`), frames in a row before re-locking (`selectorConfirmFrames`), appearance samples kept (`selectorGallerySize`).
+- All `tracker*` and `selector*` keys are optional; the code falls back to the values above.
 - Anyone adding a key tells the owner and documents it here.
 
 ## 7. Ownership
