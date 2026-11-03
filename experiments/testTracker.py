@@ -56,6 +56,14 @@ class TestTracker(unittest.TestCase):
         outputs = [self.tracker.update([personBox(100 + 4 * step), personBox(550)], self.frame) for step in range(10, 14)]
         self.assertEqual([self.idsOf(output) for output in outputs], [[1], [1], [1], [1, 2]])
 
+    def testConfirmedTrackIsReportedThroughFlicker(self):
+        for step in range(10):
+            self.tracker.update([personBox(100 + 4 * step)], self.frame)
+        for step in range(10, 30):
+            detections = [personBox(100 + 4 * step)] if step % 2 else []
+            output = self.tracker.update(detections, self.frame)
+            self.assertEqual(self.idsOf(output), [1] if step % 2 else [])
+
     def testShortOcclusionKeepsId(self):
         for step in range(20):
             self.tracker.update([personBox(100 + 6 * step)], self.frame)

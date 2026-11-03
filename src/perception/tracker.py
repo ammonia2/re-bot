@@ -110,6 +110,7 @@ class personTrack:
         self.velocity = np.zeros(2)
         self.hitStreak = 0
         self.timeSinceUpdate = 0
+        self.confirmed = False
 
     def previousBox(self, frameIndex):
         # the observation about deltaT frames back, used for the OCM direction
@@ -169,11 +170,10 @@ class personTracker:
             self.tracks.append(personTrack(self.nextId, boxes[detectionIndex], self.frameCount, self.deltaT))
             self.nextId += 1
 
-        output = [
-            (track.trackId, *track.filter.lastBox)
-            for track in self.tracks
-            if track.timeSinceUpdate == 0 and (track.hitStreak >= self.minHits or self.frameCount <= self.minHits)
-        ]
+        # once confirmed, a track stays reportable through detector flicker
+        for track in self.tracks:
+            track.confirmed = track.confirmed or track.hitStreak >= self.minHits or self.frameCount <= self.minHits
+        output = [(track.trackId, *track.filter.lastBox) for track in self.tracks if track.timeSinceUpdate == 0 and track.confirmed]
         self.tracks = [track for track in self.tracks if track.timeSinceUpdate <= self.maxAge]
         return output
 
