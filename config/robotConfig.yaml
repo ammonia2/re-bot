@@ -11,7 +11,7 @@ searchTurnSpeed: 1.5
 searchTimeoutSteps: 600
 lostGraceSteps: 15
 reacquireFovFactor: 0.6
-observationSource: groundTruth
+observationSource: vision
 cameraWidth: 640
 cameraHeight: 480
 cameraFov: 0.7854
