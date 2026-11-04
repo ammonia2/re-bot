@@ -1,8 +1,13 @@
 from collections import deque
 
 import cv2
+import numpy as np
 
+from perception.estimator import personHeightFromBox
 from perception.tracker import iouMatrix
+
+# height samples needed before the learned height replaces personHeightMeters
+minHeightSamples = 5
 
 
 def appearanceOf(frame, box):
@@ -53,6 +58,7 @@ class targetSelector:
     def reset(self):
         self.targetId = None
         self.gallery = deque(maxlen=self.gallerySize)
+        self.heights = deque(maxlen=50)
         self.otherIds = set()
         self.candidateId, self.candidateCount = None, 0
 
@@ -62,6 +68,8 @@ class targetSelector:
         feature = appearanceOf(frame, boxes[self.targetId])
         if feature is not None:
             self.gallery.append(feature)
+            if self._isClean(boxes[self.targetId], boxes, frame):
+                self._learnHeight(boxes[self.targetId])
         return boxes[self.targetId]
 
     def _follow(self, boxes, frame):
@@ -79,6 +87,7 @@ class targetSelector:
             return None
         if similarity >= self.matchThreshold or not self.gallery:
             self.gallery.append(feature)
+            self._learnHeight(box)
         return box
 
     def _reacquire(self, boxes, frame):
@@ -105,6 +114,19 @@ class targetSelector:
             return False
         others = [other for trackId, other in boxes.items() if trackId != self.targetId]
         return not others or iouMatrix([box], others).max() == 0
+
+    def targetHeight(self):
+        # median of the target's measured heights, or None until there are enough
+        return float(np.median(self.heights)) if len(self.heights) >= minHeightSamples else None
+
+    def similarityTo(self, frame, box):
+        # appearance similarity of a box to the enrolled target, 0 to 1
+        return self._similarity(appearanceOf(frame, box))
+
+    def _learnHeight(self, box):
+        height = personHeightFromBox(box, self.config)
+        if height is not None:
+            self.heights.append(height)
 
     def _similarity(self, feature):
         if feature is None or not self.gallery:

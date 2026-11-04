@@ -106,6 +106,22 @@ class TestTargetSelector(unittest.TestCase):
         self.assertIsNone(appearanceOf(frame, (100, 100, 102, 103)))
         self.assertIsNone(appearanceOf(frame, (700, 100, 760, 300)))
 
+    def testLearnsTargetHeightFromCleanFrames(self):
+        config = {"cameraWidth": 640, "cameraHeight": 480, "cameraFov": np.pi / 4, "cameraMountHeight": 0.9975}
+        selector = targetSelector(config)
+        focal = 320 / np.tan(np.pi / 8)
+        depth, height = 5.0, 1.6
+        box = (290.0, 240 - focal * (height - 0.9975) / depth, 350.0, 240 + focal * 0.9975 / depth)
+        for step in range(4):
+            selector.select([(1, *box)], drawFrame([(box, red, blue)]))
+            self.assertIsNone(selector.targetHeight())
+        selector.select([(1, *box)], drawFrame([(box, red, blue)]))
+        self.assertAlmostEqual(selector.targetHeight(), height)
+
+    def testNoHeightWithoutCameraMount(self):
+        self.enrollRedBlue(10)
+        self.assertIsNone(self.selector.targetHeight())
+
 
 if __name__ == "__main__":
     unittest.main()

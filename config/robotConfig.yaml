@@ -16,6 +16,8 @@ cameraWidth: 640
 cameraHeight: 480
 cameraFov: 0.7854
 cameraForwardOffset: 0.3
+cameraMountHeight: 0.9975
+cameraPitch: 0.0
 personHeightMeters: 1.84
 detectorConfidence: 0.35
 trackerMaxAge: 30

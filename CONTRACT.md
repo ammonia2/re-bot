@@ -78,13 +78,23 @@ Nothing under `src/perception/` may import `controller` (Webots), call superviso
 
 A reference version is already written (pinhole model, monocular distance from box height). Its owner validates it against ground truth and fixes it if needed.
 
+    def estimateTargetWithCrop(box, config, personHeight=None) -> (bearingError, distance or None)
+    def personHeightFromBox(box, config) -> height or None
+
+- `estimateTargetWithCrop` uses only box edges inside the frame. Full body: height formula. Feet cut: head ray and `personHeight - cameraMountHeight`. Head cut: feet ray on flat ground. Both cut: `None`.
+- `personHeightFromBox` measures a fully visible person's height from the feet and head rays.
+- The selector keeps the target's measured heights (`targetHeight()`, the median once there are enough samples). The vision observation passes it in, so people of any height get the right range.
+- When the range is `None`, the vision observation reports the target visible at `targetFollowDistance`, so the rover keeps facing them but does not drive closer.
+
 ## 6. Config keys added for perception
 
-    observationSource: groundTruth
+    observationSource: vision
     cameraWidth: 640
     cameraHeight: 480
     cameraFov: 0.7854
     personHeightMeters: 1.84
+    cameraMountHeight: 0.9975
+    cameraPitch: 0.0
     detectorConfidence: 0.35
     trackerMaxAge: 30
     trackerMinHits: 3
@@ -98,7 +108,8 @@ A reference version is already written (pinhole model, monocular distance from b
     selectorGallerySize: 20
 
 - `cameraWidth`, `cameraHeight` and `cameraFov` (horizontal, radians) must match the `Camera` node in the world.
-- `personHeightMeters` must match the Pedestrian model.
+- `personHeightMeters` must match the Pedestrian model. On the vision path it is only the starting guess until the selector has measured the target.
+- `cameraMountHeight` is the camera's height above the floor in meters, and `cameraPitch` its downward tilt in radians. Both must match the world (and later the real mounting). Without `cameraMountHeight`, cropped boxes give no range and no height is learned.
 - `cameraForwardOffset` is how far the camera sits ahead of the rover center, in meters. Vision converts camera range to rover-center range with it.
 - `observationSource: visionDirect` is a temporary integration stand-in: detector plus estimator on the most central box, with no tracking or identity. `vision` is the real pipeline.
 - `detectorInputSize` already exists.
@@ -135,13 +146,13 @@ Targets below are proposed, and the team confirms or changes them at kickoff.
 ## 9. Known risks
 
 1. **The detector may not fire on Webots pedestrians.** They are low-poly and COCO-trained models can miss them. Day-one check: save frames from `rover.getFrame()` with the pedestrian in view and run the detector on them. If detection is poor, tell the owner the same day. The tracker and identity work then moves to recorded real video or MOT17 clips, and the simulation is used only for the control loop.
-2. **Monocular distance** assumes the full body is in frame and the person height is known. It degrades when the person is close and cropped by the frame.
+2. **Monocular distance** assumed the full body is in frame and the person height is known. The crop-aware estimator and learned target height now cover cropping and different heights, but they assume flat ground and an upright person. Sitting, crouching, or a body hidden behind furniture with both box edges still in frame is not detected and still reads as further away.
 3. **Obstacle sensing** for the real robot is undecided (owner).
 
 ## 10. Workflow
 
 - Branches: `detector`, `tracker`, `estimator`, `benchmarks`, `experiments`. Merge into `main` through pull requests.
-- `main` must always run with `observationSource: groundTruth`.
+- `main` runs with `observationSource: vision`. `groundTruth` stays available for debugging the control loop.
 - Never commit weights, videos or recorded data. Share them through the team Drive folder.
 - Setup: `uv sync`, then open `sim/webots/worlds/companionArena.wbt` in Webots. Webots' Python command must point to `.venv/bin/python` in the repo. After any change to the world file use File > Reload World. Reset the simulation before saving the world.
 - Contract changes: a pull request that edits this file, approved by the owner.

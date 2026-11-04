@@ -1,7 +1,7 @@
 import math
 
 from perception.detector import personDetector
-from perception.estimator import estimateTarget
+from perception.estimator import estimateTargetWithCrop
 from perception.targetSelector import targetSelector
 from perception.tracker import personTracker
 
@@ -14,10 +14,16 @@ def toRoverFrame(bearingError, distance, config):
     return math.atan2(left, forward), math.hypot(forward, left)
 
 
-def boxToObservation(box, config, fovScale):
+def boxToObservation(box, config, fovScale, personHeight=None):
     if box is None:
         return False, 0.0, 0.0
-    bearingError, distance = toRoverFrame(*estimateTarget(box, config), config)
+    cameraBearing, cameraDistance = estimateTargetWithCrop(box, config, personHeight)
+    if cameraDistance is None:
+        # range unknown (body cut at both ends, so very close): keep facing the target but never drive closer
+        bearingError = toRoverFrame(cameraBearing, config["targetFollowDistance"], config)[0]
+        distance = config["targetFollowDistance"]
+    else:
+        bearingError, distance = toRoverFrame(cameraBearing, cameraDistance, config)
     # narrower cone while searching, same as the ground-truth observation
     visible = abs(bearingError) < config["cameraHalfFov"] * fovScale
     return visible, bearingError, distance
@@ -33,7 +39,7 @@ def makeVisionObservation(config):
         detections = detector.detect(frame)
         tracks = tracker.update(detections, frame)
         box = selector.select(tracks, frame)
-        return boxToObservation(box, config, fovScale)
+        return boxToObservation(box, config, fovScale, selector.targetHeight())
 
     return visionObservation
 
