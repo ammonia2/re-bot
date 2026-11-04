@@ -4,10 +4,20 @@ import math
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
 import time
+
+
+def isolateWebotsSettings(environment, folder):
+    # run Webots on a copy of the user's settings so the temporary world never lands in their recent files
+    settings = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "Cyberbotics"
+    copy = Path(folder) / "settings"
+    if settings.is_dir():
+        shutil.copytree(settings, copy / "Cyberbotics")
+    environment["XDG_CONFIG_HOME"] = str(copy)
 
 
 def captureFrames():
@@ -96,6 +106,7 @@ def main():
                         "YOLO_CONFIG_DIR": str(root / "data/ultralyticsSettings"), "YOLO_AUTOINSTALL": "false"})
     startedAt = time.time_ns()
     with TemporaryDirectory(prefix="rebotCapture-") as folder:
+        isolateWebotsSettings(environment, folder)
         project = Path(folder)
         (project / "worlds").mkdir()
         controller = project / "controllers/captureFrames"

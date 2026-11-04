@@ -3,11 +3,32 @@ import json
 import math
 import os
 from pathlib import Path
+import shutil
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
 
 root = Path(__file__).resolve().parents[1]
-defaultWebots = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs/Webots/msys64/mingw64/bin/webots.exe"
+
+
+def isolateWebotsSettings(environment, folder):
+    # run Webots on a copy of the user's settings so the temporary world never lands in their recent files
+    settings = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "Cyberbotics"
+    copy = Path(folder) / "settings"
+    if settings.is_dir():
+        shutil.copytree(settings, copy / "Cyberbotics")
+    environment["XDG_CONFIG_HOME"] = str(copy)
+
+
+def findWebots():
+    onPath = shutil.which("webots")
+    if onPath:
+        return Path(onPath)
+    if sys.platform == "win32":
+        return Path(os.environ.get("LOCALAPPDATA", "")) / "Programs/Webots/msys64/mingw64/bin/webots.exe"
+    if sys.platform == "darwin":
+        return Path("/Applications/Webots.app/Contents/MacOS/webots")
+    return Path("/usr/local/webots/webots")
 
 
 def runDiagnostics():
@@ -18,7 +39,7 @@ def runDiagnostics():
     from core.followController import rampSpeed, wrapAngle
     from core.followStateMachine import followStateMachine
     from perception.detector import personDetector
-    from perception.targetSelector import appearanceOf, targetSelector
+    from perception.targetSelector import targetSelector
     from perception.tracker import personTracker
     from perception.visionObservation import boxToObservation
 
@@ -38,7 +59,7 @@ def runDiagnostics():
         detections = detector.detect(frame)
         tracks = tracker.update(detections, frame)
         box = selector.select(tracks, frame)
-        visible, bearingError, distance = boxToObservation(box, config, 1.0)
+        visible, bearingError, distance = boxToObservation(box, config, 1.0, selector.targetHeight())
         leftSpeed, rightSpeed = machine.update(visible, bearingError, distance, float("inf"))
         leftCommand = rampSpeed(leftCommand, leftSpeed, config["maxWheelAccel"])
         rightCommand = rampSpeed(rightCommand, rightSpeed, config["maxWheelAccel"])
@@ -57,7 +78,8 @@ def runDiagnostics():
             "detections": len(detections), "maxConfidence": max((d[4] for d in detections), default=0.0),
             "boxHeight": max((d[3] - d[1] for d in detections), default=0.0),
             "trackIds": [track[0] for track in tracks], "targetId": selector.targetId,
-            "similarities": [selector._similarity(appearanceOf(frame, track[1:])) for track in tracks],
+            "similarities": [selector.similarityTo(frame, track[1:]) for track in tracks],
+            "targetHeight": selector.targetHeight(),
             "selected": box is not None, "visible": visible, "estimatedDistance": distance,
             "state": machine.state.value,
         })
@@ -87,13 +109,15 @@ def summarize(rows):
     if selected:
         errors = [abs(row["estimatedDistance"] - row["truthDistance"]) / row["truthDistance"] for row in selected]
         print(f"distance error when visible: median {sorted(errors)[len(errors) // 2]:.0%}")
+    heights = [row["targetHeight"] for row in rows if row.get("targetHeight") is not None]
+    print(f"learned target height: {heights[-1]:.2f} m" if heights else "learned target height: none")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Run the vision loop headless in Webots and report where the person is lost")
     parser.add_argument("--seconds", type=float, default=60.0, help="Simulated seconds")
     parser.add_argument("--output", type=Path, default=root / "data/simDiagnostics")
-    parser.add_argument("--webots", type=Path, default=defaultWebots)
+    parser.add_argument("--webots", type=Path, default=findWebots())
     args = parser.parse_args()
     output = args.output.resolve()
     world = (root / "sim/webots/worlds/companionArena.wbt").read_text()
@@ -102,6 +126,7 @@ def main():
     environment.update({"REBOT_DIAGNOSTICS_OUTPUT": str(output), "REBOT_DIAGNOSTICS_SECONDS": str(args.seconds),
                         "YOLO_CONFIG_DIR": str(root / "data/ultralyticsSettings"), "YOLO_AUTOINSTALL": "false"})
     with TemporaryDirectory(prefix="rebotDiagnostics-") as folder:
+        isolateWebotsSettings(environment, folder)
         project = Path(folder)
         (project / "worlds").mkdir()
         controller = project / "controllers/simDiagnostics"
@@ -110,7 +135,7 @@ def main():
         wrapper = (f"import sys, runpy\nsys.path.insert(0, {str(root / 'src')!r})\n"
                    f"runpy.run_path({str(Path(__file__).resolve())!r}, run_name='__webots_controller__')\n")
         (controller / "simDiagnostics.py").write_text(wrapper)
-        subprocess.run([str(args.webots), "--batch", "--mode=fast", "--stdout", "--stderr", "--minimize",
+        subprocess.run([str(args.webots), "--batch", "--mode=fast", "--stdout", "--stderr", "--minimize", "--no-rendering",
                         str(project / "worlds/diagnostics.wbt")], env=environment, check=True, timeout=1800)
     summarize(json.loads((output / "steps.json").read_text()))
 
