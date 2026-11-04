@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import cv2
@@ -24,6 +25,8 @@ class personDetector:
             raise FileNotFoundError(f"Model not found: {self.modelPath}; see benchmarks/README.md")
 
         if backend == "ultralytics":
+            # inference is CPU-only; hiding CUDA stops a CUDA build of torch probing NVML and warning on GPU-less machines
+            os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
             from ultralytics import YOLO
 
             self.model = YOLO(str(self.modelPath), task="detect")
