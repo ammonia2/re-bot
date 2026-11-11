@@ -5,38 +5,368 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/adept/pioneer3/protos/Pioneer3dx.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/humans/pedestrian/protos/Pedestrian.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/WoodenBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/CardboardBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/PottedTree.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/living_room_furniture/protos/Sofa.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/cabinet/protos/Cabinet.proto"
 
 WorldInfo {
+  info [
+    "Companion robot arena: a corridor, three rooms and a storage room behind a gap too narrow for the rover."
+  ]
 }
 Viewpoint {
-  orientation -0.1693003437030906 0.4710876123945336 0.8656869267064354 0.786964181438731
-  position -9.551447819161208 -7.410516200980288 4.7587043916694345
+  orientation -0.5773 0.5773 0.5773 2.0944
+  position 0 0 38
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
-  floorSize 10 10
+  floorSize 20 20
+  floorTileSize 2 2
+  wallHeight 0.6
+}
+Solid {
+  translation -8.25 2 1
+  children [
+    Shape {
+      appearance DEF wallAppearance PBRAppearance {
+        baseColor 0.85 0.82 0.75
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 3.5 0.2 2
+      }
+    }
+  ]
+  name "north wall west"
+  boundingObject Box {
+    size 3.5 0.2 2
+  }
+}
+Solid {
+  translation -0.5 2 1
+  children [
+    Shape {
+      appearance USE wallAppearance
+      geometry Box {
+        size 9 0.2 2
+      }
+    }
+  ]
+  name "north wall middle"
+  boundingObject Box {
+    size 9 0.2 2
+  }
+}
+Solid {
+  translation 7.75 2 1
+  children [
+    Shape {
+      appearance USE wallAppearance
+      geometry Box {
+        size 4.5 0.2 2
+      }
+    }
+  ]
+  name "north wall east"
+  boundingObject Box {
+    size 4.5 0.2 2
+  }
+}
+Solid {
+  translation 0 4 1
+  children [
+    Shape {
+      appearance USE wallAppearance
+      geometry Box {
+        size 0.2 4 2
+      }
+    }
+  ]
+  name "room divider south"
+  boundingObject Box {
+    size 0.2 4 2
+  }
+}
+Solid {
+  translation 0 8.75 1
+  children [
+    Shape {
+      appearance USE wallAppearance
+      geometry Box {
+        size 0.2 2.5 2
+      }
+    }
+  ]
+  name "room divider north"
+  boundingObject Box {
+    size 0.2 2.5 2
+  }
+}
+Solid {
+  translation -6.5 -2 1
+  children [
+    Shape {
+      appearance USE wallAppearance
+      geometry Box {
+        size 7 0.2 2
+      }
+    }
+  ]
+  name "south wall west"
+  boundingObject Box {
+    size 7 0.2 2
+  }
+}
+Solid {
+  translation 2.125 -2 1
+  children [
+    Shape {
+      appearance USE wallAppearance
+      geometry Box {
+        size 7.25 0.2 2
+      }
+    }
+  ]
+  name "south wall middle"
+  boundingObject Box {
+    size 7.25 0.2 2
+  }
+}
+Solid {
+  translation 8.125 -2 1
+  children [
+    Shape {
+      appearance USE wallAppearance
+      geometry Box {
+        size 3.75 0.2 2
+      }
+    }
+  ]
+  name "south wall east"
+  boundingObject Box {
+    size 3.75 0.2 2
+  }
+}
+Solid {
+  translation 3 -6 1
+  children [
+    Shape {
+      appearance USE wallAppearance
+      geometry Box {
+        size 0.2 8 2
+      }
+    }
+  ]
+  name "storage wall"
+  boundingObject Box {
+    size 0.2 8 2
+  }
+}
+Solid {
+  translation 4.1 5 1
+  children [
+    Shape {
+      appearance DEF pillarAppearance PBRAppearance {
+        baseColor 0.55 0.55 0.6
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 2
+        radius 0.3
+      }
+    }
+  ]
+  name "pillar roomB"
+  boundingObject Cylinder {
+    height 2
+    radius 0.3
+  }
+}
+Solid {
+  translation -6.5 -5.5 1
+  children [
+    Shape {
+      appearance USE pillarAppearance
+      geometry Cylinder {
+        height 2
+        radius 0.3
+      }
+    }
+  ]
+  name "pillar hall 1"
+  boundingObject Cylinder {
+    height 2
+    radius 0.3
+  }
+}
+Solid {
+  translation -4.5 -6.2 1
+  children [
+    Shape {
+      appearance USE pillarAppearance
+      geometry Cylinder {
+        height 2
+        radius 0.3
+      }
+    }
+  ]
+  name "pillar hall 2"
+  boundingObject Cylinder {
+    height 2
+    radius 0.3
+  }
+}
+Solid {
+  translation -4.8 -4.6 1
+  children [
+    Shape {
+      appearance USE pillarAppearance
+      geometry Cylinder {
+        height 2
+        radius 0.3
+      }
+    }
+  ]
+  name "pillar hall 3"
+  boundingObject Cylinder {
+    height 2
+    radius 0.3
+  }
+}
+WoodenBox {
+  translation -1 0 0.3
+  name "corridor box"
+}
+WoodenBox {
+  translation -4.2 5.6 0.4
+  name "roomA box"
+  size 0.8 0.8 0.8
+}
+CardboardBox {
+  translation 8.6 -8.6 0.3
+  name "storage box 1"
+}
+CardboardBox {
+  translation 9.3 -8.6 0.3
+  name "storage box 2"
+}
+CardboardBox {
+  translation 8.9 -8.6 0.9
+  name "storage box 3"
+}
+WoodenBox {
+  translation 3.8 -9.2 0.3
+  name "storage box 4"
+}
+Cabinet {
+  translation 9.85 -4.5 0
+  rotation 0 0 1 3.14159
+  name "storage cabinet"
+}
+PottedTree {
+  translation -9.4 1.4 0
+  name "corridor tree west"
+}
+PottedTree {
+  translation 9.4 -1.4 0
+  name "corridor tree east"
+}
+PottedTree {
+  translation -9.3 9.3 0
+  name "roomA tree"
+}
+Sofa {
+  translation 9.3 7 0
+  rotation 0 0 1 3.14159
+  name "roomB sofa"
+}
+Sofa {
+  translation -9.3 -6 0
+  name "hall sofa"
 }
 Pioneer3dx {
-  translation -3 0 0.0957926
-  rotation -1.8270876901385603e-06 -0.9999999999982442 -4.162763795645636e-07 0.049952590785315644
+  translation -9 0 0.0975
   controller "companionController"
   supervisor TRUE
   extensionSlot [
     Camera {
       translation 0.3 0 0.9
-      fieldOfView 0.7854
+      fieldOfView 1.085
       width 640
       height 480
     }
+    Lidar {
+      translation 0.05 0 0.26
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.1 0.1 0.1
+            roughness 0.6
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.05
+            radius 0.04
+          }
+        }
+      ]
+      name "lidar"
+      horizontalResolution 240
+      fieldOfView 4.18879
+      numberOfLayers 1
+      minRange 0.08
+      maxRange 8
+    }
   ]
 }
-DEF person Pedestrian {
-  translation -1 -3 1.27
+DEF personRed Pedestrian {
+  translation -7 0 1.27
+  name "personRed"
+  controller "walker"
   controllerArgs [
-    "--trajectory=-1 -3, 3 -3, 3 3, -1 3, -1 -3"
-    "--speed=0.8"
+    "--trajectory=-7 0, -3 0, -1 1, 1 0.3, 4.75 0.5, 4.75 3.5:2, 5 6.75, 1.5 6.75, -1.5 6.75, -5.5 7:3, -5.75 3.5, -5.75 0.3"
+    "--speed=0.6"
   ]
+  shirtColor 0.8 0.08 0.08
+  pantsColor 0.1 0.1 0.12
+}
+DEF personBlue Pedestrian {
+  translation -2.25 -1 1.27
+  name "personBlue"
+  controller "walker"
+  controllerArgs [
+    "--trajectory=-2.25 -1:3, -2.25 -3.5, -2.5 -7.5, -8 -7.5:2, -8 -4, -2.7 -3.3"
+    "--speed=0.6"
+  ]
+  shirtColor 0.08 0.2 0.85
+  pantsColor 0.7 0.6 0.4
+}
+DEF personGreen Pedestrian {
+  translation 8 1.5 1.27
+  name "personGreen"
+  controller "walker"
+  controllerArgs [
+    "--trajectory=8 1.5, -8 1.5, -8 -1.4:2, 8 -1.4"
+    "--speed=0.55"
+  ]
+  shirtColor 0.1 0.6 0.15
+  pantsColor 0.24 0.25 0.5
+}
+DEF personYellow Pedestrian {
+  translation 8.5 0.8 1.27
+  name "personYellow"
+  controller "walker"
+  controllerArgs [
+    "--trajectory=8.5 0.8:2, 6 0, 6 -3.5, 7.5 -7:4, 4.5 -6, 6 -3.5, 6 -0.5"
+    "--speed=0.6"
+  ]
+  shirtColor 0.9 0.8 0.05
+  pantsColor 0.35 0.2 0.1
 }

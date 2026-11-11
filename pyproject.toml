@@ -12,6 +12,8 @@ dependencies = [
   "pyyaml",
   "psutil",
   "onnxruntime",
+  "vosk>=0.3.45",
+  "sounddevice>=0.5.6",
 ]
 
 [dependency-groups]

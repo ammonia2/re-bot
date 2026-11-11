@@ -39,8 +39,12 @@ def makeVisionObservation(config):
         detections = detector.detect(frame)
         tracks = tracker.update(detections, frame)
         box = selector.select(tracks, frame)
+        visionObservation.lastTracks, visionObservation.lastFrame = tracks, frame
         return boxToObservation(box, config, fovScale, selector.targetHeight())
 
+    # lets the controller change who is followed (selector.requestTarget)
+    visionObservation.selector = selector
+    visionObservation.lastTracks, visionObservation.lastFrame = [], None
     return visionObservation
 
 

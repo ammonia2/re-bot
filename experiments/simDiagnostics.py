@@ -9,10 +9,14 @@ import sys
 from tempfile import TemporaryDirectory
 
 root = Path(__file__).resolve().parents[1]
+world = root / "sim/webots/worlds/companionArena.wbt"
+defaultCommands = "3:follow red;150:follow blue;260:follow yellow;400:stop"
+# the storage room, reachable only through a gap too narrow for the rover: (xMin, xMax, yMin, yMax)
+noGoZone = (3.1, 10.0, -10.0, -2.1)
 
 
 def isolateWebotsSettings(environment, folder):
-    # run Webots on a copy of the user's settings so the temporary world never lands in their recent files
+    # run Webots on a copy of the user's settings so headless runs never change what the user's Webots reopens
     settings = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "Cyberbotics"
     copy = Path(folder) / "settings"
     if settings.is_dir():
@@ -31,116 +35,67 @@ def findWebots():
     return Path("/usr/local/webots/webots")
 
 
-def runDiagnostics():
-    # runs the real vision loop and logs every stage next to the ground truth
-    import cv2
-    import yaml
-    from adapters.webotsRobot import webotsRobot
-    from core.followController import rampSpeed, wrapAngle
-    from core.followStateMachine import followStateMachine
-    from perception.detector import personDetector
-    from perception.targetSelector import targetSelector
-    from perception.tracker import personTracker
-    from perception.visionObservation import boxToObservation
-
-    output = Path(os.environ["REBOT_DIAGNOSTICS_OUTPUT"])
-    output.mkdir(parents=True, exist_ok=True)
-    seconds = float(os.environ["REBOT_DIAGNOSTICS_SECONDS"])
-    config = yaml.safe_load((root / "config/robotConfig.yaml").read_text())
-    rover = webotsRobot()
-    detector, tracker, selector = personDetector(config), personTracker(config), targetSelector(config)
-    machine = followStateMachine(config)
-    leftCommand, rightCommand = 0.0, 0.0
-    rows, savedMisses = [], 0
-    for step in range(int(seconds * 1000 / rover.timeStep)):
-        if not rover.step():
-            break
-        frame = rover.getFrame()
-        detections = detector.detect(frame)
-        tracks = tracker.update(detections, frame)
-        box = selector.select(tracks, frame)
-        visible, bearingError, distance = boxToObservation(box, config, 1.0, selector.targetHeight())
-        leftSpeed, rightSpeed = machine.update(visible, bearingError, distance, float("inf"))
-        leftCommand = rampSpeed(leftCommand, leftSpeed, config["maxWheelAccel"])
-        rightCommand = rampSpeed(rightCommand, rightSpeed, config["maxWheelAccel"])
-        rover.setWheelSpeeds(leftCommand, rightCommand)
-
-        roverX, roverY, roverYaw = rover.getSelfPose()
-        personX, personY = rover.getPersonPosition()
-        truthDistance = math.hypot(personX - roverX, personY - roverY)
-        truthBearing = wrapAngle(math.atan2(personY - roverY, personX - roverX) - roverYaw)
-        inView = abs(truthBearing) < config["cameraHalfFov"]
-        if inView and not detections and savedMisses < 10 and step % 10 == 0:
-            cv2.imwrite(str(output / f"miss{step:05d}_{truthDistance:.1f}m.png"), frame)
-            savedMisses += 1
-        rows.append({
-            "step": step, "truthDistance": truthDistance, "truthBearing": truthBearing, "inView": inView,
-            "detections": len(detections), "maxConfidence": max((d[4] for d in detections), default=0.0),
-            "boxHeight": max((d[3] - d[1] for d in detections), default=0.0),
-            "trackIds": [track[0] for track in tracks], "targetId": selector.targetId,
-            "similarities": [selector.similarityTo(frame, track[1:]) for track in tracks],
-            "targetHeight": selector.targetHeight(),
-            "selected": box is not None, "visible": visible, "estimatedDistance": distance,
-            "state": machine.state.value,
-        })
-    (output / "steps.json").write_text(json.dumps(rows) + "\n")
-    rover.robot.simulationQuit(0)
+def targetOf(command):
+    words = command.lower().split()
+    return next((colour for colour in ("red", "blue", "green", "yellow") if colour in words), None)
 
 
-def summarize(rows):
-    def share(subset, key):
-        return f"{sum(1 for row in subset if row[key]) / len(subset):.0%}" if subset else "n/a"
-
-    inView = [row for row in rows if row["inView"]]
-    print(f"steps: {len(rows)}, person in camera view: {len(inView)} ({len(inView) / max(len(rows), 1):.0%})")
-    for low, high in ((0, 2), (2, 3), (3, 4), (4, 5), (5, 99)):
-        band = [row for row in inView if low <= row["truthDistance"] < high]
-        print(f"  in view {low}-{high} m: {len(band):4d} steps | detected {share(band, 'detections')}"
-              f" | tracked {share([r for r in band if r['detections']], 'trackIds')}"
-              f" | selected {share(band, 'selected')} | visible {share(band, 'visible')}")
-    trackIds = sorted({trackId for row in rows for trackId in row["trackIds"]})
-    targetIds = [row["targetId"] for row in rows]
-    changes = sum(1 for before, after in zip(targetIds, targetIds[1:]) if after != before)
-    print(f"track ids seen: {trackIds}")
-    print(f"selector target id changes: {changes}, final target id: {targetIds[-1] if targetIds else None}")
+def summarize(rows, commands, robotRadius):
+    print(f"simulated {rows[-1]['time']:.0f} s, {len(rows)} steps")
     states = [row["state"] for row in rows]
     print("time per state: " + ", ".join(f"{state} {states.count(state) / len(states):.0%}" for state in sorted(set(states))))
-    selected = [row for row in rows if row["visible"]]
-    if selected:
-        errors = [abs(row["estimatedDistance"] - row["truthDistance"]) / row["truthDistance"] for row in selected]
-        print(f"distance error when visible: median {sorted(errors)[len(errors) // 2]:.0%}")
-    heights = [row["targetHeight"] for row in rows if row.get("targetHeight") is not None]
-    print(f"learned target height: {heights[-1]:.2f} m" if heights else "learned target height: none")
+    driftX, driftY = rows[-1]["odometry"][0] - (rows[-1]["rover"][0] - rows[0]["rover"][0]), rows[-1]["odometry"][1] - (rows[-1]["rover"][1] - rows[0]["rover"][1])
+    travelled = sum(math.dist(a["rover"][:2], b["rover"][:2]) for a, b in zip(rows, rows[1:]))
+    print(f"rover travelled {travelled:.0f} m, odometry drift {math.hypot(driftX, driftY):.2f} m")
+    nearest = min(row["nearestObstacle"] for row in rows)
+    touching = sum(1 for row in rows if row["nearestObstacle"] < robotRadius)
+    print(f"closest the range sensor ever got to anything: {nearest:.2f} m ({touching} steps inside the rover radius {robotRadius} m)")
+    xMin, xMax, yMin, yMax = noGoZone
+    inside = sum(1 for row in rows if xMin < row["rover"][0] < xMax and yMin < row["rover"][1] < yMax)
+    print(f"steps inside the storage room (must be 0): {inside}")
+    bounds = commands + [(math.inf, "")]
+    for (start, command), (end, _) in zip(bounds, bounds[1:]):
+        span = [row for row in rows if start <= row["time"] < end]
+        colour = targetOf(command)
+        if not span or colour is None:
+            continue
+        gaps = [math.dist(row["rover"][:2], row["people"][colour]) for row in span]
+        seen = sum(1 for row in span if row["visible"]) / len(span)
+        spanStates = [row["state"] for row in span]
+        mix = ", ".join(f"{state} {spanStates.count(state) / len(span):.0%}" for state in sorted(set(spanStates)))
+        print(f"  '{command}' {start:.0f}-{span[-1]['time']:.0f} s: target in view {seen:.0%}, "
+              f"distance to {colour} median {sorted(gaps)[len(gaps) // 2]:.1f} m, max {max(gaps):.1f} m, end {gaps[-1]:.1f} m | {mix}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run the vision loop headless in Webots and report where the person is lost")
-    parser.add_argument("--seconds", type=float, default=60.0, help="Simulated seconds")
+    parser = argparse.ArgumentParser(description="Run the companion world headless with scripted commands and report how the rover did")
+    parser.add_argument("--seconds", type=float, default=420.0, help="Simulated seconds")
+    parser.add_argument("--commands", default=defaultCommands, help="'seconds:sentence;...' played as if spoken")
+    parser.add_argument("--observation", choices=("vision", "visionDirect", "groundTruth"), help="Override observationSource")
     parser.add_argument("--output", type=Path, default=root / "data/simDiagnostics")
     parser.add_argument("--webots", type=Path, default=findWebots())
+    parser.add_argument("--summarizeOnly", action="store_true", help="Re-read the last run instead of simulating")
     args = parser.parse_args()
     output = args.output.resolve()
-    world = (root / "sim/webots/worlds/companionArena.wbt").read_text()
-    world = world.replace('controller "companionController"', 'controller "simDiagnostics"', 1)
-    environment = dict(os.environ)
-    environment.update({"REBOT_DIAGNOSTICS_OUTPUT": str(output), "REBOT_DIAGNOSTICS_SECONDS": str(args.seconds),
-                        "YOLO_CONFIG_DIR": str(root / "data/ultralyticsSettings"), "YOLO_AUTOINSTALL": "false"})
-    with TemporaryDirectory(prefix="rebotDiagnostics-") as folder:
-        isolateWebotsSettings(environment, folder)
-        project = Path(folder)
-        (project / "worlds").mkdir()
-        controller = project / "controllers/simDiagnostics"
-        controller.mkdir(parents=True)
-        (project / "worlds/diagnostics.wbt").write_text(world)
-        wrapper = (f"import sys, runpy\nsys.path.insert(0, {str(root / 'src')!r})\n"
-                   f"runpy.run_path({str(Path(__file__).resolve())!r}, run_name='__webots_controller__')\n")
-        (controller / "simDiagnostics.py").write_text(wrapper)
-        subprocess.run([str(args.webots), "--batch", "--mode=fast", "--stdout", "--stderr", "--minimize", "--no-rendering",
-                        str(project / "worlds/diagnostics.wbt")], env=environment, check=True, timeout=1800)
-    summarize(json.loads((output / "steps.json").read_text()))
+    output.mkdir(parents=True, exist_ok=True)
+    log = output / "steps.jsonl"
+    if not args.summarizeOnly:
+        environment = dict(os.environ)
+        environment.update({"REBOT_LOG": str(log), "REBOT_SECONDS": str(args.seconds), "REBOT_COMMANDS": args.commands,
+                            "YOLO_CONFIG_DIR": str(root / "data/ultralyticsSettings"), "YOLO_AUTOINSTALL": "false"})
+        if args.observation:
+            environment["REBOT_OBSERVATION"] = args.observation
+        with TemporaryDirectory(prefix="rebotDiagnostics-") as folder:
+            isolateWebotsSettings(environment, folder)
+            subprocess.run([str(args.webots), "--batch", "--mode=fast", "--stdout", "--stderr", "--minimize", "--no-rendering",
+                            str(world)], env=environment, check=True, timeout=3600)
+    import yaml
+
+    config = yaml.safe_load((root / "config/robotConfig.yaml").read_text())
+    rows = [row for row in map(json.loads, log.read_text().splitlines()) if "state" in row]
+    commands = sorted((float(when), text) for when, text in (entry.split(":", 1) for entry in args.commands.split(";") if entry.strip()))
+    summarize(rows, commands, config["robotRadius"])
 
 
-if __name__ == "__webots_controller__":
-    runDiagnostics()
-elif __name__ == "__main__":
+if __name__ == "__main__":
     main()
