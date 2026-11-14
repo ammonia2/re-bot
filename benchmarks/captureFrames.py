@@ -41,9 +41,10 @@ def captureFrames():
         for _ in range(8):
             if not rover.step():
                 raise RuntimeError("Simulation ended before capture")
-            personX, personY = rover.getPersonPosition()
-            selfNode.getField("translation").setSFVec3f([personX, personY + distance, 0.0975])
-            selfNode.getField("rotation").setSFRotation([0, 0, 1, -math.pi / 2])
+            # look back down the corridor at the red person, who stands still for the capture
+            personX, personY = rover.getPersonPosition("personRed")
+            selfNode.getField("translation").setSFVec3f([personX + distance, personY, 0.0975])
+            selfNode.getField("rotation").setSFRotation([0, 0, 1, math.pi])
             selfNode.resetPhysics()
         if not rover.step():
             raise RuntimeError("Simulation ended before capture")
@@ -52,7 +53,7 @@ def captureFrames():
         if not cv2.imwrite(str(output / name), frame):
             raise RuntimeError(f"Unable to save {name}")
         cameraPose = np.asarray(cameraNode.getPose()).reshape(4, 4)
-        personPosition = rover.robot.getFromDef("person").getPosition()
+        personPosition = rover.robot.getFromDef("personRed").getPosition()
         relative = cameraPose[:3, :3].T @ (np.asarray(personPosition) - cameraPose[:3, 3])
         truthBearing = math.atan2(relative[1], relative[0])
         truthRange = math.hypot(relative[0], relative[1])
@@ -94,6 +95,9 @@ def main():
     else:
         world = subprocess.check_output(["git", "show", f"{args.revision}:{worldPath}"], cwd=root, text=True)
     world = world.replace('controller "companionController"', 'controller "captureFrames"', 1)
+    # only the red person, standing still: the others would walk into the shots
+    world = re.sub(r"DEF person(Blue|Green|Yellow) Pedestrian \{.*?\n\}\n", "", world, flags=re.DOTALL)
+    world = world.replace('controller "walker"', 'controller "<none>"')
     if args.variant == "calibrated":
         camera = lambda match: "DEF captureCamera Camera { translation 0.3 0 0.9 width 640 height 480 fieldOfView 0.7854 }"
     else:

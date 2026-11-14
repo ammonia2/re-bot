@@ -45,10 +45,16 @@ class speechListener:
     def __init__(self, config):
         self.modelName = config.get("voiceModel", "vosk-model-small-en-us-0.15")
         self.heard = queue.Queue()
+        self.stopping = threading.Event()
         self.thread = threading.Thread(target=self._listen, daemon=True)
 
     def start(self):
         self.thread.start()
+
+    def stop(self):
+        # close the microphone before the controller exits, so Webots does not have to force-kill it on reset
+        self.stopping.set()
+        self.thread.join(timeout=1.0)
 
     def poll(self):
         sentences = []
@@ -65,8 +71,12 @@ class speechListener:
             with sounddevice.RawInputStream(samplerate=sampleRate, blocksize=4000, dtype="int16", channels=1,
                                             callback=lambda data, frames, time, status: audio.put(bytes(data))):
                 print("voice: listening (say 'follow me', 'follow red', 'next', 'stop', 'go')")
-                while True:
-                    text = heardText(recognizer, audio.get())
+                while not self.stopping.is_set():
+                    try:
+                        block = audio.get(timeout=0.2)
+                    except queue.Empty:
+                        continue
+                    text = heardText(recognizer, block)
                     if text:
                         self.heard.put(text)
         except Exception as error:

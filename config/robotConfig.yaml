@@ -1,15 +1,15 @@
-targetFollowDistance: 3.3
+targetFollowDistance: 2.5
 obstacleStopDistance: 0.4
-distanceGain: 6.0
+distanceGain: 8.0
 bearingGain: 2.0
 maxWheelSpeed: 12.0
-maxWheelAccel: 0.15
-maxTurnAccel: 0.5
+maxWheelAccel: 0.25
+maxTurnAccel: 0.6
 detectorInputSize: 224
 cameraHalfFov: 0.5425
 maxDetectionRange: 6.0 # to be realistic for sim
-searchTurnSpeed: 1.2
-searchTimeoutSteps: 600
+searchTurnSpeed: 2.0
+searchTimeoutSteps: 1900
 lostGraceSteps: 15
 reacquireFovFactor: 0.6
 observationSource: vision
@@ -32,6 +32,7 @@ selectorMargin: 0.1
 selectorConfirmFrames: 3
 selectorGallerySize: 20
 # navigation
+controlStepSeconds: 0.032
 wheelRadius: 0.0975
 wheelBase: 0.33
 robotRadius: 0.27
@@ -44,12 +45,17 @@ targetClearance: 0.6
 maxTurnSpeed: 3.0
 arrivalRadius: 0.6
 pursueLead: 1.5
+crumbSpacing: 0.5
 leadPatienceSteps: 45
 pursueTimeoutSteps: 900
 blockedPatienceSteps: 150
 headingBaseline: 0.3
 headingWindowSteps: 45
 searchDelaySteps: 45
+searchSweepSteps: 170
+searchCreepSpeed: 2.5
+searchRoamDistance: 3.0
+searchRoamSpeed: 7.0
 # commands
 voiceEnabled: true
 voiceModel: vosk-model-small-en-us-0.15

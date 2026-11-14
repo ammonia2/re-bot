@@ -5,6 +5,9 @@ from controller import Supervisor
 
 from core.robotInterface import robotInterface
 
+# meters from the lidar to the edge of the Pioneer's body
+bodyRange = 0.2
+
 
 class webotsRobot(robotInterface):
     def __init__(self):
@@ -47,6 +50,8 @@ class webotsRobot(robotInterface):
 
     def getRangeScan(self):
         ranges = np.array(self.lidar.getRangeImage(), dtype=float)
+        # nothing real can be inside the rover's own body: such readings are the lidar seeing itself or glitches
+        ranges[ranges < bodyRange] = np.inf
         return self.scanAngles, ranges
 
     def getWheelAngles(self):

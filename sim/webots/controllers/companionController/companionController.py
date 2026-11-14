@@ -177,6 +177,8 @@ while rover.step():
     if now >= runSeconds:
         break
 
+if listener:
+    listener.stop()
 if logFile:
     logFile.close()
     rover.robot.simulationQuit(0)

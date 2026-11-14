@@ -52,6 +52,22 @@ class TestObstacleAvoider(unittest.TestCase):
         self.assertTrue(blocked)
         self.assertEqual(speedScale, 0.0)
 
+    def testDrivesOnPastABoxRightBesideIt(self):
+        # the corner of a box just behind and to the right, as when squeezing past it
+        box = scanOf([(x, -0.33) for x in np.arange(-0.3, 0.45, 0.05)])
+        steer, speedScale, blocked = self.avoider.plan(box, 0.0, 5.0)
+        self.assertFalse(blocked)
+        self.assertGreater(speedScale, 0.0)
+        self.assertGreaterEqual(steer, 0.0)
+
+    def testGoesAroundABoxInACorridor(self):
+        # a 0.6 m box straight ahead in a 4 m wide corridor: the side walls must not rule out going around it
+        box = [(x, y) for x in (0.85, 1.45) for y in np.arange(-0.3, 0.31, 0.05)]
+        walls = [(x, side) for x in np.arange(-1, 8, 0.05) for side in (1.9, -2.1)]
+        steer, _, blocked = self.avoider.plan(scanOf(box + walls), 0.0, 4.0)
+        self.assertFalse(blocked)
+        self.assertGreater(abs(steer), math.radians(25))
+
     def testObstaclesBeyondTheGoalAreIgnored(self):
         steer, _, blocked = self.avoider.plan(scanOf([(1.5, 0.0)]), 0.0, 1.0)
         self.assertEqual((steer, blocked), (0.0, False))
@@ -114,6 +130,27 @@ class TestFollowStateMachine(unittest.TestCase):
         left, right = self.machine.update(True, 0.0, 6.0, self.pose, wallWithGap(1.5, 0.5))
         self.assertEqual(self.machine.state, roverState.blocked)
         self.assertEqual(left + right, 0.0)
+
+    def testSearchCirclesThenDrivesToOpenSpace(self):
+        self.machine.resume()
+        self.machine.update(True, 0.5, 5.0, self.pose, self.clear)
+        self.machine.lastSeen, self.machine.waypoints = None, []
+        for _ in range(config["searchDelaySteps"] + 1):
+            self.machine.update(False, 0.0, 0.0, self.pose, self.clear)
+        left, right = self.machine.update(False, 0.0, 0.0, self.pose, self.clear)
+        self.assertEqual(self.machine.state, roverState.searching)
+        self.assertGreater(right - left, 0)
+        self.assertGreater(left + right, 0)
+        for _ in range(config["searchSweepSteps"]):
+            left, right = self.machine.update(False, 0.0, 0.0, self.pose, self.clear)
+        self.assertIsNotNone(self.machine.roamGoal)
+        self.assertGreater(left + right, 0)
+
+    def testSearchRoamsAwayFromWalls(self):
+        wall = scanOf([(1.0, y) for y in np.arange(-4, 4.001, 0.05)])
+        goal = self.machine._openPoint(self.pose, wall)
+        self.assertLess(abs(goal[0]), 1.0)
+        self.assertGreater(math.hypot(*goal), 1.0)
 
     def testGivesUpSearchingEventually(self):
         self.machine.resume()
