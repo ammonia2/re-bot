@@ -100,6 +100,8 @@ Speech recognition is offline ([Vosk](https://alphacephei.com/vosk/), small Engl
 
 Sensing uses only what a real robot would have: the camera (person detection, tracking and recognising the same person again by clothing colour), a 2D lidar for obstacles, and wheel encoders for its own position. Ground-truth positions from the simulator are used only for logging and scoring.
 
+The person carries nothing. The path used while `pursuing` is the rover's own memory: every time the camera sees the person, the rover combines its own position (from the wheel encoders) with the person's direction and distance (from the camera) to get a point on the floor. It keeps one point for every 0.5 m the person walks. These points are approximate, since camera distance can be off by 5–15% and wheel odometry slowly drifts. So the rover goes back to following the person directly as soon as it sees them again.
+
 ### Headless test runs
 
 `experiments/simDiagnostics.py` runs the world without a window, plays scripted commands as if they were spoken, and prints a report: time spent in each state, distance to the followed person, how close the rover came to obstacles, and whether it ever entered the storage room.
@@ -112,6 +114,26 @@ uv run python experiments/simDiagnostics.py --summarizeOnly                  # r
 ```
 
 The step-by-step log is written to `data/simDiagnostics/steps.jsonl`.
+
+### Latest results
+
+Default 420 s scenario, camera only (`observationSource: vision`):
+
+| Command | Result |
+|---------|--------|
+| "follow red" | followed red round the full loop through every doorway, median 3.3 m behind |
+| "follow blue" | found blue and followed, median 3.9 m behind |
+| "next" | switched to another person and followed them |
+| "stop" | stopped |
+
+It never entered the storage room.
+
+### Known limitations
+
+- A person who has not been seen yet and is in a different room is often not found before the search gives up (about a minute).
+- The walkers follow scripted routes and walk straight through the rover if it is in their way. Real people would step around it.
+- Distance comes from one camera, so it assumes flat ground and an upright person. Someone sitting or partly hidden behind furniture reads as further away.
+- The real microphone and the on-screen status label have only been checked briefly with the Webots window open.
 
 ### Tests
 
@@ -138,3 +160,4 @@ All settings live in `config/robotConfig.yaml`. The ones you are most likely to 
 - **`ModuleNotFoundError` in the console:** the Python command preference is wrong or empty (see step 3), or you haven't run `uv sync` yet.
 - **Webots looks broken on Linux with Wayland:** the official launcher already forces X11 (`QT_QPA_PLATFORM=xcb`). Launch Webots with the `webots` command, not by running `webots-bin` directly.
 - **Lots of `Fontconfig` warnings on Linux at startup:** these are harmless and you can ignore them.
+- **`sim/webots/worlds/.companionArena.wbproj` shows as changed after a run:** Webots saved its window layout. Don't commit it: `git checkout sim/webots/worlds/.companionArena.wbproj`.
